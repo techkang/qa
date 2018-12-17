@@ -1,0 +1,10 @@
+*~
+*.org
+*.pyc
+config.py
+ec2
+ec2.shelf
+setup.sh
+.idea
+__pycache__
+stanford-corenlp-full-2018-10-05
