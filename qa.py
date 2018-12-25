@@ -25,7 +25,7 @@ def pretty_qa(question, num=10):
         print("%s. %s (%s)" % (j + 1, answer, score))
 
 
-def google_qa(question):
+def google_qa(question, **kwargs):
     """
     Return a list of tuples whose first entry is a candidate answer to
     `question`, and whose second entry is the score for that answer.
@@ -45,7 +45,7 @@ def google_qa(question):
         max_ngram=3
     query_list = rewritten_queries(question)
     for query in query_list:
-        for summary in get_summaries(query.query):
+        for summary in get_summaries(query.query, **kwargs):
             for sentence in sentences(summary, nlp):
                 for ngram in candidate_answers(sentence, query.query, answer_type, max_ngram):
                     answer_scores[ngram] += ngram_score(
@@ -53,7 +53,7 @@ def google_qa(question):
     ngrams_with_scores = sorted(answer_scores.items(),
                                 key=lambda x: x[1],
                                 reverse=True)
-    return [(" ".join(ngram), score)
+    return [("".join(ngram), score)
             for (ngram, score) in ngrams_with_scores]
 
 
@@ -105,7 +105,7 @@ class RewrittenQuery:
         self.score = score
 
 
-def get_summaries(query):
+def get_summaries(query, **kwargs):
     """
     Return a list of the top 10 summaries associated to the results
     for `query` returned by `source`.  Returns all available summaries
@@ -115,8 +115,8 @@ def get_summaries(query):
     Note also that we use GOOGLE_CACHE to cache old results, and will
     preferentially retrieve from the cache, whenever possible.
     """
-
-    results = search(query, stop=40)
+    kwargs.update(stop=40)
+    results = search(query, **kwargs)
     return results
 
 
@@ -183,7 +183,7 @@ def ngram_score(ngram, score):
     `CAPITALIZATION_FACTOR` to the power of the number of capitalized
     words.  This biases answers toward proper nouns.
     """
-    return score
+    return score + len(ngram)*0.1
 
 
 if __name__ == "__main__":

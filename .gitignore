@@ -1,6 +1,7 @@
 *~
 *.org
 *.pyc
+*.log
 config.py
 ec2
 ec2.shelf
