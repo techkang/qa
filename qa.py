@@ -8,12 +8,13 @@ qa.py
 # standard library
 from collections import defaultdict
 import re
+import pickle
 from google_qa import search
 from stanfordcorenlp import StanfordCoreNLP
 
+
 # Parameters used to score results returned from the Google-based
 # system
-
 
 
 def pretty_qa(question, num=10):
@@ -33,7 +34,7 @@ def google_qa(question, **kwargs):
     """
     nlp = StanfordCoreNLP('stanford-corenlp-full-2018-10-05', lang='zh')
     answer_scores = defaultdict(int)
-    answer_types = [('PERSON',), ('STATE_OR_PROVINCE', 'CITY'),('DATE','TIME')]
+    answer_types = [('PERSON',), ('STATE_OR_PROVINCE', 'CITY'), ('DATE', 'TIME')]
     if question.startswith('谁') or question.endswith('谁'):
         answer_type = answer_types[0]
         max_ngram = 1
@@ -41,8 +42,8 @@ def google_qa(question, **kwargs):
         answer_type = answer_types[1]
         max_ngram = 2
     else:
-        answer_type=answer_types[2]
-        max_ngram=3
+        answer_type = answer_types[2]
+        max_ngram = 3
     query_list = rewritten_queries(question)
     for query in query_list:
         for summary in get_summaries(query.query, **kwargs):
@@ -55,6 +56,48 @@ def google_qa(question, **kwargs):
                                 reverse=True)
     return [("".join(ngram), score)
             for (ngram, score) in ngrams_with_scores]
+
+
+def google_qa_quick(questions, **kwargs):
+    """
+    Return a list of tuples whose first entry is a candidate answer to
+    `question`, and whose second entry is the score for that answer.
+    The tuples are ordered in decreasing order of score.  
+    """
+    nlp = StanfordCoreNLP('stanford-corenlp-full-2018-10-05', lang='zh')
+    all_summary = []
+    print('start qa_quick')
+    try:
+        for index, question in enumerate(questions):
+            print('Start dealing with question {}.'.format(index))
+            all_summary.append(get_summaries(question, **kwargs))
+    except:
+        pass
+
+    result = []
+    answer_types = [('PERSON',), ('STATE_OR_PROVINCE', 'CITY'), ('DATE', 'TIME')]
+    for question, summaries in zip(questions, all_summary):
+        answer_scores = defaultdict(int)
+        if question.startswith('谁') or question.endswith('谁'):
+            answer_type = answer_types[0]
+            max_ngram = 1
+        elif '哪里' in question:
+            answer_type = answer_types[1]
+            max_ngram = 2
+        else:
+            answer_type = answer_types[2]
+            max_ngram = 3
+        for summary in summaries:
+            for sentence in sentences(summary, nlp):
+                for ngram in candidate_answers(sentence, question, answer_type, max_ngram):
+                    answer_scores[ngram] += ngram_score(
+                        ngram, 1)
+        ngrams_with_scores = sorted(answer_scores.items(),
+                                    key=lambda x: x[1],
+                                    reverse=True)
+        result.append([("".join(ngram), score)
+                       for (ngram, score) in ngrams_with_scores])
+    return result
 
 
 def rewritten_queries(question):
@@ -183,7 +226,7 @@ def ngram_score(ngram, score):
     `CAPITALIZATION_FACTOR` to the power of the number of capitalized
     words.  This biases answers toward proper nouns.
     """
-    return score + len(ngram)*0.1
+    return score + len(ngram) * 0.1
 
 
 if __name__ == "__main__":

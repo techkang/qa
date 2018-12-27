@@ -9,3 +9,5 @@ setup.sh
 .idea
 __pycache__
 stanford-corenlp-full-2018-10-05
+result.txt
+result.xlsx

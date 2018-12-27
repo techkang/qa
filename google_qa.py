@@ -165,8 +165,6 @@ def search(query, tld='com', lang='zh', start=0, stop=None, pause=10.0):
         num = 10
     else:
         num = stop
-    # pause, so as to not overburden google
-    time.sleep(pause + (random.random() - 0.5) * 5)
 
     # Set of hashes for the results found.
     # This is used to avoid repeated results.
@@ -189,6 +187,9 @@ def search(query, tld='com', lang='zh', start=0, stop=None, pause=10.0):
 
     # Parse the response and extract the summaries
     soup = BeautifulSoup.BeautifulSoup(html, features="lxml")
+
+    # pause, so as to not overburden google
+    time.sleep(pause + (random.random() - 0.5) * 5)
     return soup.findAll("div", {"class": "s"})
 
 
